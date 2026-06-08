@@ -1,0 +1,62 @@
+{
+  "name": "mdmeta",
+  "version": "0.1.0",
+  "description": "AI-native document indexing for Markdown — structured section access via MCP tools",
+  "type": "module",
+  "main": "./dist/sdk/index.js",
+  "types": "./dist/sdk/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js"
+    },
+    "./parser": {
+      "types": "./dist/parser/index.d.ts",
+      "import": "./dist/parser/index.js"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/index.d.ts",
+      "import": "./dist/mcp/index.js"
+    },
+    "./watcher": {
+      "types": "./dist/watcher/index.d.ts",
+      "import": "./dist/watcher/index.js"
+    }
+  },
+  "bin": {
+    "mdmeta": "./dist/mcp/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/mcp/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "markdown",
+    "mcp",
+    "ai",
+    "metadata",
+    "documentation",
+    "agent"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "markdown-it": "^14.1.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "chokidar": "^4.0.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.0",
+    "vitest": "^4.0.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0",
+    "@types/markdown-it": "^14.1.0"
+  }
+}
