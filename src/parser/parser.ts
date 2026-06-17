@@ -188,6 +188,7 @@ export function parseContent(
   content: string,
   config: MdMetaConfig,
   sourcePath: string = '',
+  previousMeta?: DocumentMeta,
 ): DocumentMeta {
   const lines = content.split('\n');
   const totalLines = lines.length;
@@ -216,6 +217,15 @@ export function parseContent(
     const trimmed = preambleContent.trim();
 
     if (trimmed.length > 0) {
+      const checksum = computeChecksum(preambleContent);
+      let lastModified = now;
+      if (previousMeta) {
+        const prevPreamble = previousMeta.sections.find((s) => s.id === PREAMBLE_ID);
+        if (prevPreamble && prevPreamble.checksum === checksum) {
+          lastModified = prevPreamble.last_modified;
+        }
+      }
+
       sectionMetas.push({
         id: PREAMBLE_ID,
         heading: '',
@@ -227,8 +237,8 @@ export function parseContent(
         subsection_count: 0,
         subsections: [],
         parent: null,
-        checksum: computeChecksum(preambleContent),
-        last_modified: now,
+        checksum: checksum,
+        last_modified: lastModified,
       });
     }
   }
@@ -262,6 +272,15 @@ export function parseContent(
     const metaIdx = sectionMetas.length;
     indexMap.set(i, metaIdx);
 
+    const checksum = computeChecksum(ownContent);
+    let lastModified = now;
+    if (previousMeta) {
+      const prevSec = previousMeta.sections.find((s) => s.id === id);
+      if (prevSec && prevSec.checksum === checksum) {
+        lastModified = prevSec.last_modified;
+      }
+    }
+
     sectionMetas.push({
       id,
       heading: raw.heading.text,
@@ -273,8 +292,8 @@ export function parseContent(
       subsection_count: raw.childIndices.length,
       subsections: [], // Filled in second pass
       parent: parentId,
-      checksum: computeChecksum(ownContent),
-      last_modified: now,
+      checksum: checksum,
+      last_modified: lastModified,
     });
   }
 

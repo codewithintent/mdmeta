@@ -79,7 +79,7 @@ export class MdMeta {
 
     if (!meta || isMetaStale(meta, content)) {
       const sourcePath = relative(this.basePath, mdPath);
-      meta = parseContent(content, this.config, sourcePath);
+      meta = parseContent(content, this.config, sourcePath, meta || undefined);
       writeMeta(mdPath, meta);
     }
 

@@ -1,2 +1,1 @@
-// mdmeta file watcher — placeholder
-export {};
+export { MetaWatcher } from './watcher.js';

@@ -3,7 +3,7 @@
 // ============================================================
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { writeFileSync, readFileSync, existsSync, unlinkSync, mkdirSync, rmSync } from 'node:fs';
+import { writeFileSync, readFileSync, existsSync, unlinkSync, mkdirSync, rmSync, readdirSync, copyFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { MdMeta } from '../src/sdk/sdk.js';
 import { removeMeta } from '../src/parser/writer.js';
@@ -12,7 +12,32 @@ import type { MdMetaConfig } from '../src/shared/types.js';
 
 // ── Helpers ──────────────────────────────────────────────────
 
-const FIXTURES = resolve(import.meta.dirname, 'fixtures');
+const REAL_FIXTURES = resolve(import.meta.dirname, 'fixtures');
+const FIXTURES = resolve(import.meta.dirname, 'tmp_sdk');
+
+function setupTmpSdk() {
+  if (existsSync(FIXTURES)) {
+    rmSync(FIXTURES, { recursive: true, force: true });
+  }
+  mkdirSync(FIXTURES, { recursive: true });
+
+  const files = readdirSync(REAL_FIXTURES);
+  for (const file of files) {
+    const src = join(REAL_FIXTURES, file);
+    const dest = join(FIXTURES, file);
+    try {
+      copyFileSync(src, dest);
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function cleanupTmpSdk() {
+  if (existsSync(FIXTURES)) {
+    rmSync(FIXTURES, { recursive: true, force: true });
+  }
+}
 
 function fixturePath(name: string): string {
   return resolve(FIXTURES, name);
@@ -36,6 +61,14 @@ function cleanMeta(...filenames: string[]): void {
     removeMeta(fixturePath(name));
   }
 }
+
+beforeEach(() => {
+  setupTmpSdk();
+});
+
+afterEach(() => {
+  cleanupTmpSdk();
+});
 
 // ── getSection ───────────────────────────────────────────────
 

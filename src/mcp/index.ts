@@ -19,6 +19,7 @@ import type { MdMetaConfig } from '../shared/types.js';
 export async function startServer(
   config?: MdMetaConfig,
   basePath?: string,
+  onShutdown?: () => Promise<void>,
 ): Promise<void> {
   const resolvedBase = basePath ?? process.cwd();
   const resolvedConfig = config ?? loadConfig(undefined, resolvedBase);
@@ -36,12 +37,18 @@ export async function startServer(
   // Handle graceful shutdown
   process.on('SIGINT', async () => {
     console.error('[mdmeta] Shutting down...');
+    if (onShutdown) {
+      await onShutdown();
+    }
     await server.close();
     process.exit(0);
   });
 
   process.on('SIGTERM', async () => {
     console.error('[mdmeta] Shutting down...');
+    if (onShutdown) {
+      await onShutdown();
+    }
     await server.close();
     process.exit(0);
   });

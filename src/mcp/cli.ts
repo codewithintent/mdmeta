@@ -15,6 +15,7 @@ import { startServer } from './index.js';
 import { parseMd } from '../parser/index.js';
 import { loadConfig, DEFAULT_CONFIG } from '../shared/config.js';
 import { CONFIG_FILENAME } from '../shared/constants.js';
+import { MetaWatcher } from '../watcher/index.js';
 import type { MdMetaConfig, IdStrategyName } from '../shared/types.js';
 
 // ── Argument Parsing ─────────────────────────────────────────
@@ -67,14 +68,27 @@ function parseArgs(argv: string[]): CliArgs {
 async function cmdServe(args: CliArgs): Promise<void> {
   const config = buildConfig(args);
   const basePath = process.cwd();
+  let onShutdown: (() => Promise<void>) | undefined;
 
   if (args.watch) {
-    // Import watcher dynamically to avoid loading it when not needed
     console.error('[mdmeta] Starting with file watcher...');
-    // Watcher integration will be added in Phase 8
+    const watcher = new MetaWatcher(basePath, { config });
+
+    watcher.on('add', (path) => console.error(`[watcher] Added & indexed: ${path}`));
+    watcher.on('change', (path) => console.error(`[watcher] Updated & re-indexed: ${path}`));
+    watcher.on('unlink', (path) => console.error(`[watcher] Removed metadata for: ${path}`));
+    watcher.on('error', (err) => console.error(`[watcher] Error:`, err));
+
+    await watcher.start();
+    console.error('[mdmeta] File watcher ready.');
+
+    onShutdown = async () => {
+      console.error('[mdmeta] Stopping file watcher...');
+      await watcher.stop();
+    };
   }
 
-  await startServer(config, basePath);
+  await startServer(config, basePath, onShutdown);
 }
 
 function cmdParse(args: CliArgs): void {
@@ -118,11 +132,28 @@ function cmdInit(): void {
 }
 
 async function cmdWatch(args: CliArgs): Promise<void> {
-  // Watcher will be implemented in Phase 8
-  console.error('[mdmeta] Watcher will be implemented in Phase 8');
-  console.error('[mdmeta] For now, use `mdmeta serve` to start the MCP server');
-  const _config = buildConfig(args);
-  process.exit(1);
+  const config = buildConfig(args);
+  const basePath = process.cwd();
+
+  console.error(`[mdmeta] Starting standalone file watcher in ${basePath}...`);
+  const watcher = new MetaWatcher(basePath, { config });
+
+  watcher.on('ready', () => console.error('[watcher] Initial scan complete. Watching for changes...'));
+  watcher.on('add', (path) => console.error(`[watcher] Added & indexed: ${path}`));
+  watcher.on('change', (path) => console.error(`[watcher] Updated & re-indexed: ${path}`));
+  watcher.on('unlink', (path) => console.error(`[watcher] Removed metadata for: ${path}`));
+  watcher.on('error', (err) => console.error(`[watcher] Error:`, err));
+
+  await watcher.start();
+
+  const cleanup = async () => {
+    console.error('\n[mdmeta] Stopping watcher...');
+    await watcher.stop();
+    process.exit(0);
+  };
+
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
 }
 
 function cmdHelp(): void {

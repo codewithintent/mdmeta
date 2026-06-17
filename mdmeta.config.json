@@ -1,0 +1,11 @@
+{
+  "roots": [
+    "."
+  ],
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "idStrategy": "slug",
+  "indexStrategy": "lazy"
+}

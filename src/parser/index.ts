@@ -26,7 +26,8 @@ export function parseMd(mdPath: string, config?: MdMetaConfig): DocumentMeta {
   const resolvedConfig = config ?? loadConfig(undefined, dirname(mdPath));
   const content = readFileSync(mdPath, 'utf-8');
   const sourcePath = relative(process.cwd(), mdPath);
-  const meta = parseContent(content, resolvedConfig, sourcePath);
+  const existingMeta = readMeta(mdPath) || undefined;
+  const meta = parseContent(content, resolvedConfig, sourcePath, existingMeta);
 
   writeMeta(mdPath, meta);
 
